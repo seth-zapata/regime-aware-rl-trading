@@ -1,36 +1,24 @@
 """
-Data acquisition and processing module.
+Data Module
 
-This module handles:
-- Fetching data from various sources (Yahoo Finance, Alpha Vantage, IBKR)
-- Data cleaning and validation
-- Feature engineering
+Provides data loading and processing for multiple sources:
+- Price data (Yahoo Finance)
+- Macroeconomic indicators (FRED)
+- SEC filings (EDGAR)
+- Unified data pipeline
 """
 
-from .data_loader import (
-    get_data,
-    DataLoader,
-    check_data_quality,
-    detect_anomalies
-)
-from .feature_engineering import FeatureEngine
-from .preprocessing import DataPreprocessor
-from .sequence_generator import (
-    SequenceDataset,
-    create_sequences,
-    prepare_data_for_lstm,
-    verify_no_lookahead
-)
+from .price_loader import PriceLoader
+from .fred_loader import FREDLoader, FRED_SERIES, DEFAULT_REGIME_SERIES
+from .edgar_loader import EDGARLoader, Filing
+from .data_pipeline import DataPipeline
 
 __all__ = [
-    'get_data',
-    'DataLoader',
-    'check_data_quality',
-    'detect_anomalies',
-    'FeatureEngine',
-    'DataPreprocessor',
-    'SequenceDataset',
-    'create_sequences',
-    'prepare_data_for_lstm',
-    'verify_no_lookahead',
+    'PriceLoader',
+    'FREDLoader',
+    'FRED_SERIES',
+    'DEFAULT_REGIME_SERIES',
+    'EDGARLoader',
+    'Filing',
+    'DataPipeline',
 ]

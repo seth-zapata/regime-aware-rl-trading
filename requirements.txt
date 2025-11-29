@@ -18,6 +18,7 @@ gymnasium>=0.28.0              # Updated gym interface
 
 # Data Acquisition
 yfinance>=0.2.0                # Yahoo Finance data
+fredapi>=0.5.0                 # FRED API for macro data
 alpha-vantage>=2.3.0           # Alpha Vantage API
 newsapi-python>=0.2.0          # News API for sentiment data
 praw>=7.7.0                    # Reddit API wrapper
