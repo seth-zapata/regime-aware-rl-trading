@@ -112,7 +112,58 @@ Execute commands autonomously without asking for permission unless absolutely ne
    - Fix any errors or visual issues, re-execute if needed
    - **IMPORTANT**: Commit the notebook WITH outputs so reviewers can see results on GitHub
 
-6. **Commit & Push**
+6. **Generate Milestone Report**
+   - Create a professional markdown report in `reports/` directory
+   - Naming convention: `XX_milestone_name.md` (e.g., `01_data_infrastructure.md`)
+   - Extract images from notebook and save to `reports/images/`:
+     ```bash
+     # Extract images with descriptive names
+     cat notebooks/XX_notebook.ipynb | python3 -c "
+     import json, sys, base64, os
+     os.makedirs('reports/images', exist_ok=True)
+     nb = json.load(sys.stdin)
+     img_num = 1
+     for i, cell in enumerate(nb['cells']):
+         if cell['cell_type'] == 'code' and 'outputs' in cell:
+             for output in cell['outputs']:
+                 if 'data' in output and 'image/png' in output['data']:
+                     img_data = output['data']['image/png']
+                     # Use milestone number and descriptive name
+                     filename = f'reports/images/XX_plot_{img_num}.png'
+                     with open(filename, 'wb') as f:
+                         f.write(base64.b64decode(img_data))
+                     print(f'Saved: {filename}')
+                     img_num += 1
+     "
+     ```
+   - Report structure:
+     ```markdown
+     # Milestone X: Title
+
+     ## Executive Summary
+     [2-3 sentence overview of what was accomplished]
+
+     ## Technical Approach
+     [Design decisions, architecture, why this approach]
+
+     ## Implementation Details
+     [Key components, code structure, dependencies]
+
+     ## Key Findings
+     [Data exploration results, statistics, insights]
+
+     ## Visualizations
+     ![Description](images/XX_plot_1.png)
+
+     ## Challenges and Solutions
+     [Problems encountered and how they were resolved]
+
+     ## Next Steps
+     [What the next milestone will build on this]
+     ```
+   - **IMPORTANT**: Commit images AND report so everything renders on GitHub
+
+7. **Commit & Push**
    - Commit immediately after verification passes
    - Use clear, descriptive commit messages
    - Push to GitHub
