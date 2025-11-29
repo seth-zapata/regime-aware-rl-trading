@@ -86,21 +86,31 @@ Execute commands autonomously without asking for permission unless absolutely ne
    - Naming convention: `XX_milestone_name.ipynb` (e.g., `01_data_pipeline.ipynb`)
 
 5. **Execute and Verify Notebook**
-   - Run the notebook to verify it executes without errors:
+   - Run the notebook to generate outputs (execute in-place, overwriting the original):
      ```bash
      jupyter nbconvert --to notebook --execute notebooks/XX_notebook.ipynb \
-         --output XX_notebook_executed.ipynb --ExecutePreprocessor.timeout=600
+         --inplace --ExecutePreprocessor.timeout=600
      ```
-   - For notebooks with plots, convert to HTML to extract images:
+   - For notebooks with plots, extract and view images to verify:
      ```bash
-     jupyter nbconvert --to html notebooks/XX_notebook_executed.ipynb
+     # Extract images from notebook
+     cat notebooks/XX_notebook.ipynb | python3 -c "
+     import json, sys, base64
+     nb = json.load(sys.stdin)
+     for i, cell in enumerate(nb['cells']):
+         if cell['cell_type'] == 'code' and 'outputs' in cell:
+             for output in cell['outputs']:
+                 if 'data' in output and 'image/png' in output['data']:
+                     img_data = output['data']['image/png']
+                     with open(f'plot_{i}.png', 'wb') as f:
+                         f.write(base64.b64decode(img_data))
+                     print(f'Saved: plot_{i}.png')
+     "
+     # View plots with Read tool, then delete temp files
+     rm -f plot_*.png
      ```
-   - View generated images to verify visualizations are correct:
-     - Images are embedded in the executed notebook or HTML output
-     - Use the Read tool on the HTML file or extract base64 images
-     - For standalone plots saved to files, view them directly with Read
-   - Fix any errors or visual issues before committing
-   - Delete `_executed` files after verification (they're in .gitignore)
+   - Fix any errors or visual issues, re-execute if needed
+   - **IMPORTANT**: Commit the notebook WITH outputs so reviewers can see results on GitHub
 
 6. **Commit & Push**
    - Commit immediately after verification passes
