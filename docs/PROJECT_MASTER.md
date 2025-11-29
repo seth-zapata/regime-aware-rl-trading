@@ -504,8 +504,15 @@ These are exactly what quant firms look for in candidates.
 ### Getting Started
 
 ```bash
-cd /home/sethz/quant-research-2025/quant-trading-advanced
-source venv/bin/activate
+# Clone and navigate to project
+git clone https://github.com/seth-zapata/quant-trading-advanced.git
+cd quant-trading-advanced
+
+# Create and activate virtual environment
+python3 -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+
+# Install dependencies
 pip install -r requirements.txt
 
 # Set up FRED API key (free, get from https://fred.stlouisfed.org/docs/api/api_key.html)

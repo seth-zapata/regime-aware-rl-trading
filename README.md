@@ -2,7 +2,7 @@
 
 **Research Question**: Does incorporating macroeconomic regime information and SEC filing data provide measurable improvement over price-only models?
 
-An advanced quantitative finance research project exploring regime-aware trading strategies using alternative data sources (FRED macroeconomic indicators, SEC EDGAR filings) and reinforcement learning. This project extends the [baseline quant-trading-ml project](../quant-trading-ml/) with a focus on better problem formulation rather than just more complex models.
+An advanced quantitative finance research project exploring regime-aware trading strategies using alternative data sources (FRED macroeconomic indicators, SEC EDGAR filings) and reinforcement learning. This project extends the [baseline quant-trading-ml project](https://github.com/seth-zapata/quant-trading-ml) with a focus on better problem formulation rather than just more complex models.
 
 **Project Status**: Active Development
 
@@ -241,13 +241,13 @@ These are exactly what quantitative finance firms look for in candidates.
 ## Documentation
 
 - **[CLAUDE.md](CLAUDE.md)** - Development workflow and AI collaboration instructions
-- **[../ADVANCED_PROJECT_MASTER.md](../ADVANCED_PROJECT_MASTER.md)** - Detailed project specification
+- **[docs/PROJECT_MASTER.md](docs/PROJECT_MASTER.md)** - Detailed project specification
 
 ---
 
 ## Related Projects
 
-- [Baseline Quant Trading ML Project](../quant-trading-ml/) - Foundation project demonstrating core workflow and limitations of price-only prediction
+- [Baseline Quant Trading ML Project](https://github.com/seth-zapata/quant-trading-ml) - Foundation project demonstrating core workflow and limitations of price-only prediction
 
 ---
 

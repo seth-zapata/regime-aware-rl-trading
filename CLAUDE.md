@@ -4,7 +4,7 @@
 
 **At the start of EVERY session**, read the master document to understand project context:
 ```
-Read /home/sethz/quant-research-2025/ADVANCED_PROJECT_MASTER.md
+Read docs/PROJECT_MASTER.md
 ```
 
 This provides:
@@ -109,6 +109,22 @@ Execute commands autonomously without asking for permission unless absolutely ne
 - MLflow runs (mlruns/)
 - Virtual environment (venv/)
 - API keys and credentials
+
+**Link and Reference Validation**:
+Before committing any documentation changes, verify all links and references are valid:
+- Internal links (e.g., `[text](docs/file.md)`) must point to files that exist in the repo
+- External links to other repos should use full GitHub URLs (e.g., `https://github.com/user/repo`)
+- Never use relative links to parent directories (`../`) that are outside the git repo
+- Never use absolute local paths (e.g., `/home/user/...`) in documentation
+- Run `git ls-files "*.md"` to see what markdown files are tracked
+
+**Quick Link Check**:
+```bash
+# Find all markdown links in tracked files
+grep -r '\[.*\](.*\.md)' --include="*.md" .
+# Verify linked files exist
+git ls-files "*.md"
+```
 
 ### 4. Checkpoints
 
@@ -262,8 +278,7 @@ with open('configs/experiment.yaml') as f:
 ## Common Commands
 
 ```bash
-# Activate environment
-cd /home/sethz/quant-research-2025/quant-trading-advanced
+# Activate environment (from project root)
 source venv/bin/activate
 
 # Run tests
