@@ -1,607 +1,331 @@
-# Advanced Quantitative Trading Research - Master Project Document
+# CLAUDE.md - Development Workflow for Advanced Quant Trading Project
 
-**Project Goal**: Implement sophisticated quantitative trading approaches using alternative data, reinforcement learning, and multi-modal models to move beyond the limitations of technical-indicator-only prediction.
+## Session Startup Protocol
 
-**Context**: This is a follow-up to the completed baseline project (`quant-trading-ml/`), which proved that daily stock prediction from technical indicators alone is fundamentally difficult. This advanced project tackles the problem with institutional-level methods.
+**At the start of EVERY session**, read the master document to understand project context:
+```
+Read /home/sethz/quant-research-2025/ADVANCED_PROJECT_MASTER.md
+```
 
----
-
-## Table of Contents
-- [Project Overview](#project-overview)
-- [Development Workflow](#development-workflow)
-- [Technical Approaches](#technical-approaches)
-- [Data Infrastructure](#data-infrastructure)
-- [8-Week Timeline](#8-week-timeline)
-- [Success Criteria](#success-criteria)
+This provides:
+- Project goals and research question
+- Technical approaches (regime detection, EDGAR, RL)
+- Data infrastructure details
+- Success criteria
+- Current milestone status
 
 ---
 
 ## Project Overview
 
-### What We Learned from Baseline Project
+**Research Question**: Does incorporating macroeconomic regime information and SEC filing data provide measurable improvement over price-only models?
 
-**Proven Challenges**:
-- Daily stock direction prediction from technical indicators alone: F1=0.1745 (weak)
-- Architecture changes (LSTM → Transformer) don't help when signal is weak
-- Walk-forward validation shows high variance (CV=0.900) across time periods
-- Post-processing (confidence filtering) can't fix fundamentally weak predictions
+**Key Technical Approaches**:
+1. **Macro Regime Detection**: HMM on FRED indicators (yield curve, VIX, unemployment)
+2. **SEC Filing Analysis**: FinBERT sentiment on 10-K/10-Q filings from EDGAR
+3. **Reinforcement Learning**: PPO agent with regime-conditioned state space
+4. **Ablation Studies**: Rigorous testing of each component's value
 
-**Best Baseline Result**:
-- LSTM with Weighted BCE Loss: 2.06% return vs 19.05% Buy & Hold
-- **Conclusion**: Need stronger signal sources beyond price history
-
-### Goals for Advanced Project
-
-**Primary Goal**: Achieve risk-adjusted returns **consistently better** than Buy & Hold across multiple market regimes
-
-**Technical Goals**:
-1. Integrate alternative data (sentiment, fundamentals, macro indicators)
-2. Implement reinforcement learning for dynamic policy optimization
-3. Build multi-modal models (price + text + fundamentals)
-4. Establish robust MLOps infrastructure (experiment tracking, model versioning)
-5. Test across multiple assets and time periods
-
-**Career Goal**: Build research-level portfolio project demonstrating:
-- Ability to work with heterogeneous data sources
-- Modern RL techniques (PPO, A2C, DQN)
-- Production ML infrastructure (MLflow, Docker, APIs)
-- Systematic experimental methodology at scale
+**Data Sources** (all free):
+- yfinance: Price/volume data
+- FRED API: Macroeconomic indicators
+- SEC EDGAR: Company filings
 
 ---
 
-## Development Workflow
+## Development Principles
 
-### Core Principles (Carried Over from Baseline Project)
+### 1. Autonomous Execution
 
-These principles worked extremely well in the baseline project and should be preserved:
-
-#### 1. **Autonomous Execution**
-
-Claude Code should execute commands autonomously without asking for permission unless absolutely necessary.
+Execute commands autonomously without asking for permission unless absolutely necessary.
 
 **Execute Automatically (NO permission needed)**:
-- File operations: chmod, mkdir, cp, mv, rm (on project files)
+- File operations: mkdir, cp, mv, rm (on project files)
 - Running tests: pytest, python -m pytest
 - Data processing: scripts that read/write to data/ directory
 - Model training: running training scripts
 - Git operations: add, commit, push (following git safety protocol)
-- Building/installing: pip install, python setup.py
+- Building/installing: pip install
 - Analysis/visualization: matplotlib, seaborn plots
+- MLflow operations: logging experiments, starting runs
 
 **Ask for Permission (human intervention required)**:
 - Destructive git operations: git reset --hard, git push --force
 - System-level changes: apt-get, brew install
 - Deleting large amounts of data (>100MB)
-- Making API calls that cost money (ONLY on first use)
 - Running commands that require sudo/root access
 
 **Communication Style**:
 - Instead of: "Should I run pytest to verify the tests?"
 - Just do: Run pytest, then report "✓ All 24 tests passing"
 
-#### 2. **Feature Implementation Cycle**
+### 2. Feature Implementation Cycle
 
-**Standard workflow** (this worked perfectly):
-1. **Implement Feature** - Write production code with proper error handling
-2. **Write Tests** - Comprehensive coverage for critical paths
-3. **Verify Functionality** - Run tests and manual verification
-4. **Commit & Push** - Immediately after verification passes
+**Standard workflow for each feature:**
 
-**No commit without passing these checks**:
-- ✅ All tests pass
-- ✅ No obvious bugs or crashes
-- ✅ Code follows project patterns
-- ✅ Critical functions have docstrings
+1. **Implement Feature**
+   - Write production code with proper error handling
+   - Follow existing code patterns and architecture
+   - Add comprehensive docstrings
 
-#### 3. **Git Workflow**
+2. **Write Tests**
+   - Tests written AFTER feature implementation
+   - Focus on critical paths: data loaders, model training, backtesting
+   - Edge cases: Missing data, empty DataFrames, invalid inputs
+   - Temporal correctness: Validate no look-ahead bias
 
-**What worked well**:
-- Direct commits to master for incremental changes (acceptable for solo project)
-- One commit per logical feature (bundled implementation + tests)
-- Detailed commit messages with context
-- Regular pushes (never let uncommitted work pile up)
+3. **Verify Functionality**
+   - Run all tests and ensure they pass
+   - Manual verification on sample data
+   - Check for common issues
 
-**Commit granularity**:
-- ✅ Bundle feature + tests in one commit
-- ✅ Separate commits for docs vs functional changes
-- ✅ Atomic commits that tell a story of progression
+4. **Commit & Push**
+   - Commit immediately after verification passes
+   - Use clear, descriptive commit messages
+   - Push to GitHub
 
-#### 4. **Claude Code Autonomy & Checkpoints**
+### 3. Git Workflow
 
-**Decision-Making Pattern** (this worked great):
+**Commit Messages**:
+- Describe the feature, not the timeline
+- Use conventional commit format: `feat:`, `fix:`, `test:`, `docs:`
+- Bundle related changes (implementation + tests) in one commit
+
+**Examples**:
+- ✅ `feat: implement FRED data loader with macro indicators`
+- ✅ `feat: add HMM-based regime detection`
+- ✅ `test: add unit tests for EDGAR filing parser`
+- ❌ `Week 1: data infrastructure` (don't expose timeline)
+
+**What to Commit**:
+- Source code and tests
+- Configuration files (YAML)
+- Documentation (README, CLAUDE.md)
+- Requirements.txt updates
+
+**What NOT to Commit** (in .gitignore):
+- Data files (data/)
+- Model checkpoints (except final models)
+- MLflow runs (mlruns/)
+- Virtual environment (venv/)
+- API keys and credentials
+
+### 4. Checkpoints
+
+**Decision-Making Pattern**:
 1. Complete current feature (implement → test → verify → commit)
-2. Determine logical next step based on project timeline and dependencies
+2. Determine logical next step based on dependencies
 3. **Briefly state** what was completed and what's next
 4. **PAUSE and wait for human's explicit go-ahead** before proceeding
 
 **Example**:
-- ✅ "Alternative data ingestion complete. Next: Sentiment model training. Should I proceed?"
-- ❌ "Alternative data complete. Moving to sentiment model next." (doesn't wait)
+- ✅ "FRED data loader complete with 8 macro indicators. Next: Regime detection module. Should I proceed?"
+- ❌ "FRED loader done. Starting regime detection." (doesn't wait)
 
-#### 5. **Testing Standards**
+---
 
-**Test coverage guidelines**:
-- Test critical paths thoroughly (data pipeline, model training, backtesting)
-- Edge cases: Missing data, empty DataFrames, invalid inputs
-- Temporal correctness: Validate no look-ahead bias
-- Performance: Flag potential bottlenecks
+## Technical Guidelines
 
-**Testing approach that worked**:
-- Write tests AFTER feature implementation
-- Focus on critical functionality, not 100% coverage
-- Integration tests for module interactions
+### Data Pipeline
 
-#### 6. **Documentation Strategy**
+**Directory Structure**:
+```
+data/
+├── raw/                    # Immutable raw data
+│   ├── price/              # OHLCV from yfinance
+│   ├── fred/               # Macro indicators
+│   └── edgar/              # SEC filings (text)
+├── processed/              # Cleaned, aligned data
+│   ├── features/           # Engineered features
+│   ├── regimes/            # Regime labels
+│   └── sentiment/          # Filing sentiment scores
+└── metadata/               # Schemas, data dictionaries
+```
 
-**What worked well**:
-- Inline documentation (docstrings) same commit as feature
-- External documentation (README, guides) separate commits after functional work
-- Progressive documentation (don't wait until end)
+**Data Alignment**:
+- Price: Daily frequency
+- FRED: Monthly (forward-fill to daily)
+- EDGAR: Quarterly (use filing date, not period date)
+- **Critical**: Always use publication/filing dates to avoid look-ahead bias
 
-**New additions for advanced project**:
-- Experiment tracking logs (MLflow metadata)
-- Data pipeline documentation (schemas, sources, update frequency)
-- Model cards (architecture, performance, limitations)
+### Experiment Tracking
 
-### New Workflow Elements for Advanced Project
-
-#### 7. **Experiment Tracking**
-
-Use MLflow from day one (learned from baseline project pain points):
-
+**Use MLflow for all experiments**:
 ```python
 import mlflow
 
-# Track every experiment
-with mlflow.start_run(run_name="sentiment_lstm_v1"):
+with mlflow.start_run(run_name="experiment_name"):
     mlflow.log_params({
-        'model': 'LSTM',
-        'hidden_size': 128,
-        'data_sources': ['price', 'sentiment'],
-        'sequence_length': 30
+        'model': 'PPO',
+        'n_regimes': 3,
+        'data_sources': ['price', 'fred', 'edgar']
     })
 
-    # Training loop
+    # Training...
+
     mlflow.log_metrics({
-        'train_loss': train_loss,
-        'val_f1': val_f1,
-        'val_sharpe': val_sharpe
+        'val_sharpe': sharpe,
+        'val_max_drawdown': mdd
     })
-
-    # Save model
-    mlflow.pytorch.log_model(model, "model")
 ```
 
 **Benefits**:
-- No manual logging in markdown files
+- No manual logging in markdown
 - Easy comparison across experiments
-- Model versioning built-in
+- Reproducible via logged parameters
 
-#### 8. **Data Pipeline Management**
+### Configuration Management
 
-**Because we're using multiple data sources**, establish clear pipeline:
-
-```
-data/
-├── raw/                    # Never modify (immutable)
-│   ├── price/              # OHLCV from APIs
-│   ├── sentiment/          # Scraped news/tweets
-│   ├── fundamentals/       # Financial statements
-│   └── macro/              # Fed data, yields
-├── processed/              # Cleaned, aligned data
-│   ├── features/           # Engineered features
-│   └── sequences/          # Model-ready sequences
-└── metadata/               # Schemas, update logs
-```
-
-**Pipeline pattern**:
-1. Fetch → `data/raw/{source}/{date}.parquet` (immutable)
-2. Process → `data/processed/features/{date}.parquet`
-3. Generate sequences → `data/processed/sequences/{split}/{date}.pkl`
-
-#### 9. **Configuration Management**
-
-Use YAML configs (learned this lesson from baseline):
-
+**Use YAML configs for all hyperparameters**:
 ```yaml
-# configs/sentiment_lstm.yaml
+# configs/experiment.yaml
 model:
-  type: multimodal_lstm
-  price_encoder:
-    hidden_size: 128
-    num_layers: 2
-  text_encoder:
-    model_name: "ProsusAI/finbert"
-    max_length: 512
-  fusion:
-    hidden_size: 256
+  type: ppo
+  hidden_sizes: [128, 64]
+  learning_rate: 0.0003
 
 data:
-  sources: ['price', 'sentiment_finbert']
-  lookback: 30
-  batch_size: 64
+  sources: ['price', 'fred', 'edgar']
+  lookback_days: 60
 
 training:
-  epochs: 50
-  lr: 0.001
-  early_stopping_patience: 10
+  total_timesteps: 100000
 ```
 
-**Benefits**:
-- Easy hyperparameter tracking
-- Reproducible experiments
-- No hardcoded values
-
----
-
-## Technical Approaches
-
-### Priority 1: Alternative Data Integration ⭐
-
-#### 1.1 Sentiment Analysis
-
-**Data Sources**:
-- **Free**: Reddit API (r/wallstreetbets, r/stocks), Twitter API (academic), EDGAR filings
-- **Paid** (if budget allows): Bloomberg, Refinitiv, RavenPack
-
-**Implementation Steps**:
-1. Build scrapers for news/social media
-2. Fine-tune FinBERT for sentiment classification
-3. Create multi-modal model (price LSTM + sentiment BERT)
-4. Backtest with sentiment as additional feature
-
-**Key Papers**:
-- "FinBERT: Financial Sentiment Analysis with Pre-trained Language Models"
-- "Listening to Chaotic Whispers" (news-oriented stock prediction)
-
-**Libraries**:
-- `transformers` (HuggingFace)
-- `praw` (Reddit API)
-- `tweepy` (Twitter API)
-
-#### 1.2 Fundamental Data
-
-**Sources**:
-- Free: Financial Modeling Prep API, Alpha Vantage
-- Paid: Quandl, Polygon.io
-
-**Features**:
-- P/E ratio, EPS, revenue growth, profit margins
-- Debt-to-equity, cash flow, book value
-
-**Approach**: Combine fundamentals with technical indicators
-
-#### 1.3 Macroeconomic Indicators
-
-**Sources** (Free):
-- FRED API (Federal Reserve Economic Data)
-- Bureau of Labor Statistics
-- Treasury.gov (yield curves)
-
-**Features**:
-- Fed funds rate, yield curve slope, VIX
-- GDP growth, unemployment rate, inflation (CPI)
-
-**Use Case**: Regime detection (bull/bear/sideways markets)
-
-### Priority 2: Reinforcement Learning 🤖
-
-**Why RL**: Instead of predicting price direction, learn optimal trading policy directly
-
-**Algorithms to Try**:
-1. **PPO** (Proximal Policy Optimization) - stable, good for continuous action spaces
-2. **A2C** (Advantage Actor-Critic) - faster training than PPO
-3. **DQN** (Deep Q-Network) - discrete actions (buy/sell/hold)
-
-**Implementation** (using Stable-Baselines3):
-
+**Load configs**:
 ```python
-from stable_baselines3 import PPO
-from gym import Env
+import yaml
 
-class TradingEnv(Env):
-    """Custom gym environment for stock trading."""
-
-    def __init__(self, data, initial_balance=100000):
-        self.data = data
-        self.balance = initial_balance
-        # Define action space: [position_size, hold_days]
-        self.action_space = Box(low=-1, high=1, shape=(2,))
-        # State: price history + portfolio state
-        self.observation_space = Box(...)
-
-    def step(self, action):
-        # Execute trade, update portfolio
-        reward = self.calculate_reward()  # Sharpe, return, etc.
-        return obs, reward, done, info
-
-# Train agent
-model = PPO("MlpPolicy", env, verbose=1)
-model.learn(total_timesteps=100000)
+with open('configs/experiment.yaml') as f:
+    config = yaml.safe_load(f)
 ```
 
-**Reward Functions to Try**:
-- Sharpe ratio (risk-adjusted)
-- Sortino ratio (downside risk)
-- Total return - max_drawdown (balance return and risk)
+### Testing Standards
 
-**Key Papers**:
-- "Deep Reinforcement Learning for Trading" (Deng et al.)
-- "Practical Deep Reinforcement Learning Approach for Stock Trading" (Xiong et al.)
+**Test Categories**:
+- **Unit tests**: Individual functions (data loaders, feature engineering)
+- **Integration tests**: Module interactions (data → model → backtest)
+- **Temporal tests**: Verify no look-ahead bias
 
-### Priority 3: Multi-Modal Models 🔀
+**Key Areas to Test**:
+- Data loaders return correct schema
+- Feature engineering respects temporal order
+- Regime detection produces valid labels
+- RL environment follows Gym interface
+- Backtest metrics calculated correctly
 
-**Combine heterogeneous data sources**:
+---
 
-```python
-class MultiModalPredictor(nn.Module):
-    def __init__(self):
-        # Price encoder
-        self.price_encoder = nn.LSTM(price_features, 128, 2)
+## Project Milestones
 
-        # Text encoder (FinBERT)
-        self.text_encoder = BertModel.from_pretrained('ProsusAI/finbert')
+**Note**: These are internal milestones. Git commits should describe features, not timeline.
 
-        # Fundamental encoder
-        self.fundamental_encoder = nn.Linear(fundamental_features, 64)
+### Milestone 1: Data Infrastructure
+- [ ] FRED data loader with caching
+- [ ] SEC EDGAR filing downloader and parser
+- [ ] Price data integration
+- [ ] Data alignment pipeline
+- [ ] Unit tests for all data loaders
 
-        # Attention fusion
-        self.attention = nn.MultiheadAttention(embed_dim=256, num_heads=4)
+### Milestone 2: Regime Detection
+- [ ] HMM-based regime detector
+- [ ] Rule-based regime detector
+- [ ] Regime visualization
+- [ ] Tests for regime consistency
 
-        # Classifier
-        self.classifier = nn.Linear(256, 1)
+### Milestone 3: SEC Filing Analysis
+- [ ] EDGAR filing text extraction
+- [ ] FinBERT sentiment scoring
+- [ ] Sentiment aggregation pipeline
+- [ ] Tests for NLP pipeline
 
-    def forward(self, price, text, fundamentals):
-        price_emb = self.price_encoder(price)[0][:, -1, :]
-        text_emb = self.text_encoder(text).pooler_output
-        fund_emb = self.fundamental_encoder(fundamentals)
+### Milestone 4: RL Trading Agent
+- [ ] Custom Gym trading environment
+- [ ] PPO agent implementation
+- [ ] Regime-conditioned state space
+- [ ] Walk-forward validation framework
 
-        # Stack embeddings
-        combined = torch.stack([price_emb, text_emb, fund_emb], dim=0)
+### Milestone 5: Ablation Studies
+- [ ] Systematic component ablation
+- [ ] Statistical significance testing
+- [ ] Performance visualization
+- [ ] Comparison with baseline project
 
-        # Attention fusion
-        fused, _ = self.attention(combined, combined, combined)
+### Milestone 6: Documentation
+- [ ] Code cleanup
+- [ ] Comprehensive README
+- [ ] Results summary
+- [ ] Future work documentation
 
-        # Prediction
-        return self.classifier(fused.mean(dim=0))
+---
+
+## Common Commands
+
+```bash
+# Activate environment
+cd /home/sethz/quant-research-2025/quant-trading-advanced
+source venv/bin/activate
+
+# Run tests
+pytest tests/ -v
+pytest tests/test_fred_loader.py -v  # Specific test file
+
+# MLflow UI
+mlflow ui  # http://localhost:5000
+
+# Install new dependency
+pip install package_name
+pip freeze > requirements.txt
+
+# Git operations
+git add .
+git commit -m "feat: description"
+git push origin master
 ```
 
-**Fusion Strategies**:
-- Early fusion (concatenate features)
-- Late fusion (separate predictions, then ensemble)
-- Attention fusion (learn which modality matters when)
+---
 
-### Priority 4: Graph Neural Networks 🕸️
+## Critical Warnings
 
-**Use Case**: Model relationships between stocks
+### Look-Ahead Bias Prevention
+- FRED data has publication lag - use release dates
+- SEC filings have filing dates - only use after filing date
+- Always test with dedicated temporal validation
 
-**Data**: Stock correlation networks, sector relationships, supply chain connections
+### Data Quality
+- FRED API requires free API key
+- SEC EDGAR has rate limits (10 req/sec)
+- Handle missing data explicitly
 
-**Implementation** (using PyTorch Geometric):
+### RL Training
+- RL is unstable - use multiple random seeds
+- Log training curves to detect divergence
+- Have fallback to simpler methods
 
-```python
-import torch_geometric as pyg
+### Overfitting
+- More data sources = more overfitting risk
+- Each component must prove value via ablation
+- Walk-forward validation is mandatory
 
-class StockGNN(nn.Module):
-    def __init__(self, num_stocks, hidden_dim):
-        self.conv1 = pyg.nn.GCNConv(price_features, hidden_dim)
-        self.conv2 = pyg.nn.GCNConv(hidden_dim, hidden_dim)
-        self.predictor = nn.Linear(hidden_dim, 1)
+---
 
-    def forward(self, x, edge_index):
-        # x: [num_stocks, features]
-        # edge_index: [2, num_edges] (correlation graph)
+## Environment Setup
 
-        x = F.relu(self.conv1(x, edge_index))
-        x = self.conv2(x, edge_index)
-        return self.predictor(x)
+```bash
+# Required environment variable
+export FRED_API_KEY="your_key_here"
+
+# Python version
+python --version  # Should be 3.10+
+
+# Key dependencies
+# - PyTorch: Deep learning
+# - stable-baselines3: RL algorithms
+# - hmmlearn: Hidden Markov Models
+# - transformers: FinBERT
+# - fredapi: FRED data access
+# - mlflow: Experiment tracking
 ```
-
-**Graph Construction**:
-- Nodes: Individual stocks
-- Edges: Correlation > threshold, same sector, supply chain relationships
-
----
-
-## Data Infrastructure
-
-### Required APIs & Services
-
-**Free Tier** (Start here):
-- ✅ yfinance - Price data
-- ✅ FRED API - Macroeconomic data
-- ✅ Reddit API - Sentiment (with academic access)
-- ✅ Alpha Vantage - Fundamentals (500 calls/day)
-- ✅ EDGAR - SEC filings
-
-**Paid Tier** (If budget $100-500/month):
-- Polygon.io ($200/mo) - Real-time data + fundamentals
-- Financial Modeling Prep ($50/mo) - Comprehensive fundamentals
-- NewsAPI ($450/mo) - News headlines
-- RavenPack (institutional) - Professional sentiment
-
-**Compute Resources**:
-- **Local**: CPU training is fine for prototyping
-- **Cloud**: Google Colab Pro ($10/mo) for GPU training
-- **Production**: AWS EC2 spot instances (~$50/mo)
-
-### MLOps Stack
-
-**Experiment Tracking**: MLflow (free, open-source)
-**Model Registry**: MLflow Model Registry
-**Monitoring**: TensorBoard (free)
-**Orchestration**: Airflow or Prefect (for data pipelines)
-**Containerization**: Docker (for reproducibility)
-
----
-
-## 8-Week Timeline
-
-### Week 1-2: Data Infrastructure & Sentiment Analysis
-- Set up MLflow tracking
-- Build news/Reddit scrapers
-- Fine-tune FinBERT for sentiment
-- Create multi-modal model (price + sentiment)
-- Baseline: LSTM with sentiment features
-
-### Week 3-4: Reinforcement Learning
-- Implement custom trading gym environment
-- Train PPO/A2C/DQN agents
-- Experiment with reward functions
-- Compare RL vs supervised learning
-
-### Week 5-6: Multi-Modal Models & GNNs
-- Integrate fundamental data
-- Build attention fusion model
-- Implement stock correlation GNN
-- Test across multiple assets (SPY, QQQ, individual stocks)
-
-### Week 7: Production Infrastructure
-- Dockerize models
-- Set up automated data pipelines
-- Create monitoring dashboards
-- Paper trading validation
-
-### Week 8: Evaluation & Documentation
-- Walk-forward validation across ALL models
-- Performance comparison vs baseline project
-- Comprehensive documentation
-- Portfolio presentation materials
-
----
-
-## Success Criteria
-
-### Technical Success
-
-**Minimum Bar** (Better than baseline):
-- F1 > 0.20 (vs 0.1745 baseline)
-- Sharpe > 1.5 consistently across time windows
-- Low variance in walk-forward validation (CV < 0.5 vs 0.900 baseline)
-
-**Stretch Goals**:
-- Beat Buy & Hold in 2/3 time windows
-- Sharpe > 2.0
-- Positive returns in both bull and bear markets
-
-### Research Success
-
-Demonstrate **systematic improvement** over baseline:
-- Quantify value of each data source (ablation studies)
-- Compare RL vs supervised learning rigorously
-- Prove multi-modal > single-modal with statistical tests
-
-### Career Success
-
-Build portfolio showcasing:
-- Alternative data integration (news, sentiment, fundamentals)
-- Modern RL techniques (PPO, DQN)
-- Production ML infrastructure (MLflow, Docker, APIs)
-- Research-level experimental rigor
-
----
-
-## Key Differences from Baseline Project
-
-| Aspect | Baseline Project | Advanced Project |
-|--------|------------------|------------------|
-| **Data** | Price (OHLCV) only | Price + sentiment + fundamentals + macro |
-| **Approach** | Supervised learning (direction prediction) | RL (policy learning) + supervised + multi-modal |
-| **Models** | LSTM, Transformer | LSTM + BERT + GNN + PPO/A2C/DQN |
-| **Infrastructure** | Manual logging | MLflow, Docker, automated pipelines |
-| **Timeline** | 8 weeks (solo project) | 8 weeks (more complex, more resources) |
-| **Budget** | $0 (all free data) | $0-500 (optional paid data/compute) |
-| **Outcome** | Proof of concept (F1=0.1745) | Production-ready (target Sharpe >1.5) |
-
----
-
-## Critical Warnings & Lessons from Baseline
-
-### 1. **Look-Ahead Bias** (Still critical!)
-- Multi-modal data makes this HARDER (sentiment from news can leak future info)
-- Always validate: sentiment at time t uses only news from t-1 or earlier
-- Dedicated tests for every data source
-
-### 2. **Data Quality > Data Quantity**
-- Baseline showed more features (48 vs 26) made things worse
-- Focus on **signal** not **volume**
-- Ablation studies to validate each data source adds value
-
-### 3. **Overfitting is Easier with More Data Sources**
-- More data = more ways to overfit
-- Strict train/val/test splits
-- Walk-forward validation is MANDATORY
-
-### 4. **Start Simple, Add Complexity**
-- Don't build full multi-modal model day 1
-- Baseline: Price + sentiment LSTM first
-- Then add RL, then add GNN, then add fundamentals
-- Each addition must prove its value
-
-### 5. **Budget Time for Data Wrangling**
-- Scraping, cleaning, aligning different data sources takes 40-50% of project time
-- APIs fail, data has gaps, schemas change
-- Build robust error handling and data validation
-
----
-
-## References & Resources
-
-### Essential Papers
-1. **Sentiment**: "FinBERT: Financial Sentiment Analysis with Pre-trained Language Models"
-2. **RL Trading**: "Deep Reinforcement Learning for Trading" (Deng et al., 2017)
-3. **Multi-Modal**: "Multimodal Deep Learning for Finance" (Chen et al., 2020)
-4. **GNNs**: "Temporal Graph Networks for Deep Learning on Dynamic Graphs"
-
-### Libraries & Tools
-- **ML**: PyTorch, transformers, stable-baselines3, pytorch-geometric
-- **Data**: yfinance, praw, tweepy, fredapi, pandas-datareader
-- **MLOps**: mlflow, docker, tensorboard, prefect
-- **Backtesting**: (reuse from baseline project)
-
-### Courses
-- "Deep Reinforcement Learning" (UC Berkeley CS285)
-- "Natural Language Processing with Deep Learning" (Stanford CS224N)
-- "Machine Learning for Trading" (Georgia Tech CS7646)
-
----
-
-## Development Best Practices (Preserved from Baseline)
-
-### What Worked Extremely Well
-1. ✅ **Modular code** (separate data, models, strategies, backtesting)
-2. ✅ **Incremental development** (small commits, frequent testing)
-3. ✅ **Autonomous execution** (Claude runs tests/commits without asking)
-4. ✅ **Checkpoints** (pause after each feature for human approval on next step)
-5. ✅ **Honest documentation** (negative results are valuable research)
-
-### New Additions for Advanced Project
-1. ✅ **MLflow from day 1** (don't manually log experiments)
-2. ✅ **Config files** (YAML for all hyperparameters)
-3. ✅ **Docker** (reproducible environments)
-4. ✅ **Data pipelines** (automated, versioned, monitored)
-
----
-
-## Closing Notes
-
-This advanced project is **significantly more complex** than the baseline:
-- More data sources (4+ vs 1)
-- More model types (RL, multi-modal, GNN vs LSTM/Transformer)
-- More infrastructure (MLflow, Docker, APIs vs manual logging)
-
-**Budget extra time** for:
-- Data pipeline debugging (APIs break, data has gaps)
-- RL training (hyperparameter tuning is hard)
-- Multi-modal integration (aligning different data frequencies)
-
-**But the payoff is huge**:
-- Research-level portfolio project
-- Demonstrates institutional-grade skills
-- Much higher chance of beating market
-- Production ML infrastructure experience
-
-Good luck! Start with Week 1-2 (sentiment analysis) and build from there.
 
 ---
 

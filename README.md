@@ -1,60 +1,80 @@
-# Advanced Quantitative Trading with Machine Learning
+# Macro Regime-Aware Trading with Alternative Data
 
-**Building on Baseline Project - Exploring Advanced ML Techniques**
+**Research Question**: Does incorporating macroeconomic regime information and SEC filing data provide measurable improvement over price-only models?
 
-An advanced quantitative finance research project exploring state-of-the-art machine learning approaches for algorithmic trading. This project extends the [baseline quant-trading-ml project](../quant-trading-ml/) with advanced techniques including reinforcement learning, alternative data integration, and multi-modal neural architectures.
+An advanced quantitative finance research project exploring regime-aware trading strategies using alternative data sources (FRED macroeconomic indicators, SEC EDGAR filings) and reinforcement learning. This project extends the [baseline quant-trading-ml project](../quant-trading-ml/) with a focus on better problem formulation rather than just more complex models.
 
-**Project Status**: Week 1 - Initial Setup
+**Project Status**: Active Development
 
 ---
 
 ## Overview
 
-This advanced project addresses the key limitations discovered in the baseline project:
+### Why This Project Exists
 
-### Baseline Project Limitations
-- **Weak predictive signal**: F1 score of 0.17 with LSTM
-- **High variance**: Walk-forward validation showed CV=0.900
-- **Limited data**: Only price/volume technical indicators
-- **Binary classification**: Simple UP/DOWN next-day prediction
-- **Underperformed Buy & Hold**: 2.06% vs 19.05% returns
+The baseline project demonstrated that **daily stock prediction from technical indicators alone is fundamentally difficult** (F1=0.17, underperformed Buy & Hold). Instead of applying more complex models to the same problem, this project takes a different approach:
 
-### Advanced Project Goals
-1. **Alternative data integration**: News sentiment, social media, fundamentals, macroeconomic indicators
-2. **Advanced ML architectures**: Reinforcement learning (PPO, A2C), multi-modal models, Graph Neural Networks
-3. **Better problem formulation**: Multi-day horizons, volatility prediction, regime detection
-4. **Robust evaluation**: Comprehensive walk-forward validation, transaction cost modeling
-5. **Production infrastructure**: MLflow experiment tracking, Docker deployment, YAML configs
+1. **Better problem formulation**: Predict market *regimes* (which persist for months) instead of daily direction (which is mostly noise)
+2. **Alternative data**: Use FRED macro indicators and SEC filings, which provide fundamentally different signals than price history
+3. **Direct policy learning**: Use reinforcement learning to learn trading policies conditioned on regime state
+
+### Core Innovation: Regime-Aware Trading
+
+Markets behave differently in different regimes:
+- **Expansion**: Risk-on, momentum works, buy dips
+- **Contraction**: Risk-off, defensive positioning, cash
+- **High Volatility**: Mean reversion, smaller positions
+
+This project detects regimes using macroeconomic indicators and adapts trading strategy accordingly.
 
 ---
 
-## Key Innovations
+## Key Features
 
-### 1. Multi-Modal Architecture
-Combine multiple data sources in a unified model:
-- **Price encoder**: LSTM for price/volume sequences
-- **Text encoder**: BERT for news sentiment
-- **Fundamental encoder**: MLP for balance sheet data
-- **Fusion layer**: Attention mechanism to combine modalities
+### 1. Multi-Source Data Pipeline
 
-### 2. Reinforcement Learning
-Train agents to learn optimal trading policies:
-- **PPO (Proximal Policy Optimization)** for stable training
-- **DQN (Deep Q-Network)** for discrete action spaces
-- **Custom trading environment** with realistic market simulation
+| Source | Data Type | Use Case |
+|--------|-----------|----------|
+| **yfinance** | Price/Volume | Base market data |
+| **FRED** | Macro indicators | Regime detection |
+| **SEC EDGAR** | Company filings | Sentiment signals |
 
-### 3. Alternative Data Pipeline
-Integrate diverse data sources:
-- **News sentiment**: FinBERT on financial news headlines
-- **Social media**: Reddit r/wallstreetbets, Twitter financial influencers
-- **Fundamental data**: P/E ratios, earnings reports, balance sheets
-- **Macro indicators**: Interest rates, GDP, unemployment, VIX
+All data sources are **free** - no API costs required.
 
-### 4. Graph Neural Networks
-Model relationships between assets:
-- Nodes: Individual stocks
-- Edges: Correlation, sector membership, supply chain relationships
-- **GCN (Graph Convolutional Network)** to propagate information
+### 2. Regime Detection
+
+Two complementary approaches:
+- **Hidden Markov Model (HMM)**: Probabilistic regime switching based on macro indicators
+- **Rule-Based**: Simple thresholds on yield curve, VIX, unemployment
+
+Key indicators used:
+- Yield curve slope (10Y - 2Y Treasury)
+- VIX volatility index
+- Unemployment rate
+- Fed funds rate
+- Credit spreads
+
+### 3. SEC Filing Analysis
+
+Extract sentiment from SEC filings:
+- Download 10-K, 10-Q, 8-K filings via EDGAR API
+- Parse and extract key sections (Risk Factors, MD&A)
+- Score sentiment using pre-trained FinBERT
+- Use as additional trading signal
+
+### 4. Reinforcement Learning Trading Agent
+
+PPO (Proximal Policy Optimization) agent that:
+- Observes price features + regime state + filing sentiment
+- Learns optimal trading policy (buy/hold/sell)
+- Optimizes for risk-adjusted returns (Sharpe ratio)
+
+### 5. Rigorous Evaluation
+
+- **Walk-forward validation**: Test across multiple time periods
+- **Ablation studies**: Prove each component adds value
+- **Statistical significance**: p-values and confidence intervals
+- **MLflow tracking**: All experiments logged and reproducible
 
 ---
 
@@ -64,85 +84,44 @@ Model relationships between assets:
 quant-trading-advanced/
 ├── src/
 │   ├── data/
-│   │   ├── price_data.py         # Price/volume data (Yahoo, Alpha Vantage)
-│   │   ├── sentiment_data.py     # News + social media sentiment
-│   │   ├── fundamental_data.py   # Financial statements, ratios
-│   │   ├── macro_data.py         # Economic indicators
-│   │   └── pipeline.py           # Multi-source data orchestration
+│   │   ├── price_loader.py      # Yahoo Finance integration
+│   │   ├── fred_loader.py       # FRED macro data
+│   │   ├── edgar_loader.py      # SEC filings
+│   │   └── data_pipeline.py     # Alignment and feature engineering
 │   ├── models/
-│   │   ├── multimodal/           # Price + text + fundamental fusion
-│   │   ├── reinforcement/        # PPO, DQN, A2C agents
-│   │   ├── graph/                # GNN architectures
-│   │   └── baseline/             # Improved LSTM/Transformer baselines
-│   ├── strategies/
-│   │   ├── rl_strategy.py        # RL agent trading strategy
-│   │   ├── multimodal_strategy.py# Multi-modal model strategy
-│   │   └── ensemble_strategy.py  # Combine multiple models
+│   │   ├── regime_detector.py   # HMM and rule-based regimes
+│   │   ├── sentiment_model.py   # FinBERT for filing analysis
+│   │   └── rl_agent.py          # PPO trading agent
 │   ├── backtesting/
-│   │   ├── backtest.py           # Enhanced backtesting engine
-│   │   ├── transaction_costs.py  # Slippage, commissions, market impact
-│   │   └── metrics.py            # Performance metrics
+│   │   ├── environment.py       # Gym trading environment
+│   │   ├── metrics.py           # Performance metrics
+│   │   └── walk_forward.py      # Walk-forward validation
 │   └── utils/
-│       ├── experiment_tracking.py# MLflow integration
-│       ├── config_loader.py      # YAML config management
-│       └── visualization.py      # Plotting utilities
-├── configs/                      # YAML configuration files
-│   ├── models/
-│   │   ├── multimodal_lstm.yaml
-│   │   ├── ppo_agent.yaml
-│   │   └── gnn.yaml
-│   └── experiments/
-│       ├── sentiment_experiment.yaml
-│       └── rl_experiment.yaml
-├── tests/                        # Comprehensive test suite
-├── notebooks/                    # Research and EDA notebooks
-├── scripts/                      # Training and evaluation scripts
-├── docs/                         # Documentation
-├── data/                         # Data storage (gitignored)
-├── models/                       # Saved model checkpoints
-├── results/                      # Experiment results
-├── mlruns/                       # MLflow tracking data
-├── CLAUDE.md                     # AI development workflow
-└── README.md                     # This file
+│       ├── config.py            # YAML config loading
+│       └── visualization.py     # Plotting utilities
+├── configs/                     # YAML configuration files
+├── tests/                       # Comprehensive test suite
+├── notebooks/                   # Research and EDA notebooks
+├── data/                        # Data storage (gitignored)
+├── mlruns/                      # MLflow tracking (gitignored)
+└── results/                     # Experiment results
 ```
-
----
-
-## Technical Stack
-
-### Core Technologies
-- **Python 3.12** - Primary language
-- **PyTorch 2.0+** - Deep learning framework
-- **MLflow** - Experiment tracking and model registry
-- **Docker** - Containerization for reproducibility
-- **Gym** - RL environment interface
-
-### Machine Learning
-- **Models**: LSTM, BERT, PPO, DQN, GCN, Transformers
-- **Libraries**: transformers (Hugging Face), stable-baselines3, torch-geometric
-- **Optimization**: Adam, learning rate scheduling, gradient clipping
-
-### Data & Infrastructure
-- **Data**: yfinance, NewsAPI, Reddit API, SEC EDGAR
-- **Storage**: pandas, parquet files, SQLite
-- **Visualization**: matplotlib, seaborn, plotly
-- **Testing**: pytest, hypothesis (property-based testing)
 
 ---
 
 ## Quick Start
 
 ### Prerequisites
-- Python 3.8+ (3.12 recommended)
+
+- Python 3.10+ (3.12 recommended)
 - Git
-- 5-10 GB free disk space (for data + models)
-- API keys (optional): NewsAPI, Reddit, Twitter
+- FRED API key (free, get from [FRED](https://fred.stlouisfed.org/docs/api/api_key.html))
 
 ### Installation
 
 ```bash
-# Clone repository
-cd /home/sethz/quant-research-2025/quant-trading-advanced
+# Navigate to project
+cd /path/to/quant-trading-advanced
 
 # Create virtual environment
 python3 -m venv venv
@@ -152,97 +131,150 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install --upgrade pip
 pip install -r requirements.txt
 
-# Set up MLflow
-mlflow ui  # Access at http://localhost:5000
+# Set FRED API key
+export FRED_API_KEY="your_key_here"
 
 # Run tests
 pytest tests/ -v
+
+# Start MLflow UI (optional)
+mlflow ui  # Access at http://localhost:5000
 ```
 
 ---
 
-## Development Roadmap
+## Technical Approach
 
-### 8-Week Timeline
+### Regime Detection Pipeline
 
-| Week | Phase | Key Deliverables |
-|------|-------|------------------|
-| 1 | Setup & Data Pipeline | Multi-source data ingestion, MLflow setup |
-| 2 | Sentiment Integration | FinBERT sentiment, Reddit scraper, data fusion |
-| 3 | Multi-Modal Model | Price+Text encoder, attention fusion, training |
-| 4 | Reinforcement Learning | PPO agent, custom trading environment |
-| 5 | Advanced Techniques | GNN for multi-asset, meta-learning |
-| 6 | Comprehensive Backtesting | Walk-forward validation, transaction costs |
-| 7 | Comparison & Analysis | Baseline vs RL vs Multi-modal vs GNN |
-| 8 | Documentation & Deployment | Docker containerization, final report |
+```
+FRED Macro Data → Feature Engineering → HMM → Regime Labels
+     ↓                                          ↓
+[yield_curve,          [normalize,         [expansion,
+ vix,                   smooth,             contraction,
+ unemployment,          lag]                high_vol]
+ fed_funds]
+```
+
+### Trading Agent Architecture
+
+```
+State = [price_features, regime_one_hot, filing_sentiment, portfolio_state]
+           ↓
+        PPO Policy Network
+           ↓
+Action = {buy, hold, sell} or position_size ∈ [-1, 1]
+           ↓
+        Trading Environment
+           ↓
+Reward = risk_adjusted_return - drawdown_penalty
+```
+
+### Evaluation Framework
+
+```
+Full Dataset
+    ├── Train Window 1 → Test Window 1 → Metrics 1
+    ├── Train Window 2 → Test Window 2 → Metrics 2
+    └── Train Window 3 → Test Window 3 → Metrics 3
+                              ↓
+                    Aggregate Statistics
+                    (mean, std, significance tests)
+```
 
 ---
 
 ## Success Criteria
 
-### Technical Metrics
-- **F1 Score > 0.20** (baseline: 0.17)
-- **Sharpe Ratio > 1.5** (baseline: 0.0)
-- **Outperform Buy & Hold** in at least 50% of walk-forward windows
-- **Low variance**: CV < 0.5 across time periods (baseline: 0.900)
+### Primary Goals
 
-### Research Quality
-- Systematic hypothesis testing with MLflow tracking
-- Comprehensive ablation studies (what contributes to performance?)
-- Walk-forward validation across different market regimes
-- Transaction cost sensitivity analysis
+| Metric | Target | Description |
+|--------|--------|-------------|
+| **Ablation Significance** | p < 0.05 | At least one alt data source shows significant improvement |
+| **Walk-Forward Windows** | 3+ | Validated across multiple time periods |
+| **Documentation** | Complete | Honest analysis of what worked and what didn't |
 
-### Engineering Quality
-- 100+ unit tests with >90% coverage
-- All experiments reproducible via config files
-- Docker image for deployment
-- Professional documentation and visualizations
+### Secondary Goals
+
+| Metric | Target | Description |
+|--------|--------|-------------|
+| **Unit Tests** | 50+ | Comprehensive coverage of critical paths |
+| **Reproducibility** | 100% | All experiments reproducible via configs |
+| **Code Quality** | Clean | Modular, documented, follows best practices |
+
+### Stretch Goals
+
+| Metric | Target | Description |
+|--------|--------|-------------|
+| **Beat Buy & Hold** | 2/3 windows | Outperform in majority of test periods |
+| **Sharpe Ratio** | > 1.0 | Consistent risk-adjusted returns |
 
 ---
 
-## Building on Baseline Project
+## Key Differences from Baseline Project
 
-### What Worked (Preserved)
-✅ Modular architecture (separate data, models, strategies, backtesting)
-✅ Strict temporal validation (no look-ahead bias)
-✅ Comprehensive testing suite
-✅ Git workflow with atomic commits
-✅ Honest documentation of negative results
+| Aspect | Baseline | Advanced |
+|--------|----------|----------|
+| **Problem** | Daily direction | Regime detection |
+| **Data** | Price only | Price + FRED + EDGAR |
+| **Approach** | Supervised (LSTM) | RL + HMM + NLP |
+| **Models** | LSTM, Transformer | PPO, HMM, FinBERT |
+| **Infrastructure** | Manual logging | MLflow, YAML configs |
+| **Success Metric** | Beat market | Prove alt data value |
 
-### What Didn't Work (Improved)
-❌ Limited data → ✅ Multi-source alternative data
-❌ Weak predictive signal → ✅ Better problem formulation
-❌ High variance → ✅ Robust walk-forward validation
-❌ Simple architectures → ✅ Advanced models (RL, GNN, multi-modal)
-❌ Binary classification → ✅ Multi-day horizons, volatility prediction
+---
+
+## What This Project Demonstrates
+
+Even if the model doesn't beat the market, this project showcases:
+
+1. **Problem Formulation Skills**: Choosing regime detection over daily prediction shows understanding of market dynamics
+2. **Alternative Data Expertise**: Working with SEC filings and FRED data - real institutional data sources
+3. **Modern ML Techniques**: RL (PPO), unsupervised learning (HMM), NLP (FinBERT)
+4. **Research Rigor**: Ablation studies, statistical testing, walk-forward validation
+5. **Software Engineering**: Clean code, comprehensive testing, experiment tracking
+
+These are exactly what quantitative finance firms look for in candidates.
 
 ---
 
 ## Documentation
 
-- **CLAUDE.md** - Development workflow and AI collaboration instructions
-- **ARCHITECTURE.md** - System design and technical reference (TBD)
-- **EXPERIMENTS.md** - Detailed experiment log with MLflow tracking (TBD)
-- **RESULTS.md** - Comprehensive performance analysis (TBD)
+- **[CLAUDE.md](CLAUDE.md)** - Development workflow and AI collaboration instructions
+- **[../ADVANCED_PROJECT_MASTER.md](../ADVANCED_PROJECT_MASTER.md)** - Detailed project specification
 
 ---
 
 ## Related Projects
 
-- [Baseline Quant Trading ML Project](../quant-trading-ml/) - Foundation project demonstrating core workflow
+- [Baseline Quant Trading ML Project](../quant-trading-ml/) - Foundation project demonstrating core workflow and limitations of price-only prediction
+
+---
+
+## References
+
+### Key Papers
+- Hamilton (1989) - "Regime Shifts in Stock Returns" (foundational HMM)
+- Deng et al. (2017) - "Deep Reinforcement Learning for Trading"
+- Araci (2019) - "FinBERT: Financial Sentiment Analysis"
+- Gu, Kelly, Xiu (2020) - "Empirical Asset Pricing via Machine Learning"
+
+### Libraries
+- [stable-baselines3](https://stable-baselines3.readthedocs.io/) - RL algorithms
+- [hmmlearn](https://hmmlearn.readthedocs.io/) - Hidden Markov Models
+- [transformers](https://huggingface.co/transformers/) - FinBERT
+- [MLflow](https://mlflow.org/) - Experiment tracking
+
+### Data Sources
+- [FRED](https://fred.stlouisfed.org/) - Federal Reserve Economic Data
+- [SEC EDGAR](https://www.sec.gov/edgar/) - SEC filings database
+- [Yahoo Finance](https://finance.yahoo.com/) - Price data
 
 ---
 
 ## License
 
 MIT License - See LICENSE file for details
-
----
-
-## Contact
-
-**Seth Zapata**
-[GitHub](https://github.com/seth-zapata) | [LinkedIn](https://linkedin.com/in/sethzapata)
 
 ---
 
