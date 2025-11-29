@@ -85,7 +85,24 @@ Execute commands autonomously without asking for permission unless absolutely ne
    - Include visualizations, sample outputs, and usage examples
    - Naming convention: `XX_milestone_name.ipynb` (e.g., `01_data_pipeline.ipynb`)
 
-5. **Commit & Push**
+5. **Execute and Verify Notebook**
+   - Run the notebook to verify it executes without errors:
+     ```bash
+     jupyter nbconvert --to notebook --execute notebooks/XX_notebook.ipynb \
+         --output XX_notebook_executed.ipynb --ExecutePreprocessor.timeout=600
+     ```
+   - For notebooks with plots, convert to HTML to extract images:
+     ```bash
+     jupyter nbconvert --to html notebooks/XX_notebook_executed.ipynb
+     ```
+   - View generated images to verify visualizations are correct:
+     - Images are embedded in the executed notebook or HTML output
+     - Use the Read tool on the HTML file or extract base64 images
+     - For standalone plots saved to files, view them directly with Read
+   - Fix any errors or visual issues before committing
+   - Delete `_executed` files after verification (they're in .gitignore)
+
+6. **Commit & Push**
    - Commit immediately after verification passes
    - Use clear, descriptive commit messages
    - Push to GitHub
