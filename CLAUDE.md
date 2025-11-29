@@ -86,16 +86,52 @@ Execute commands autonomously without asking for permission unless absolutely ne
 
 ### 3. Git Workflow
 
-**Commit Messages**:
-- Describe the feature, not the timeline
-- Use conventional commit format: `feat:`, `fix:`, `test:`, `docs:`
-- Bundle related changes (implementation + tests) in one commit
+**Commit Message Convention** (Conventional Commits):
 
-**Examples**:
+Format:
+```
+<type>: <concise description in imperative mood>
+
+<optional body with more detail>
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+Types:
+| Type | When to Use |
+|------|-------------|
+| `feat` | New feature or capability |
+| `fix` | Bug fix |
+| `refactor` | Code restructuring (no behavior change) |
+| `test` | Adding or updating tests |
+| `docs` | Documentation only |
+| `perf` | Performance improvement |
+| `chore` | Maintenance (deps, configs) |
+
+Rules:
+- **Imperative mood**: "add feature" not "added feature" or "adds feature"
+- **Lowercase**: Start with lowercase after the type
+- **No period**: Don't end the subject line with a period
+- **~50 char limit**: Keep subject line concise
+- **Be specific**: Describe what changed, not just "update code"
+- **No timeline references**: Don't mention weeks, sprints, or dates
+
+**Good Examples**:
 - ✅ `feat: implement FRED data loader with macro indicators`
-- ✅ `feat: add HMM-based regime detection`
+- ✅ `fix: prevent look-ahead bias in FRED data alignment`
+- ✅ `refactor: extract data alignment into separate module`
 - ✅ `test: add unit tests for EDGAR filing parser`
-- ❌ `Week 1: data infrastructure` (don't expose timeline)
+- ✅ `docs: add API usage examples to README`
+- ✅ `perf: optimize HMM training with vectorized operations`
+- ✅ `chore: update requirements.txt with new dependencies`
+
+**Bad Examples**:
+- ❌ `feat: Updated the code` (not imperative, not specific)
+- ❌ `fix: Fixed bug.` (has period, not specific)
+- ❌ `Week 1: data infrastructure` (exposes timeline)
+- ❌ `WIP` or `misc changes` (not descriptive)
 
 **What to Commit**:
 - Source code and tests
