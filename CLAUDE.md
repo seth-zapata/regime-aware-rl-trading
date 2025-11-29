@@ -79,7 +79,13 @@ Execute commands autonomously without asking for permission unless absolutely ne
    - Manual verification on sample data
    - Check for common issues
 
-4. **Commit & Push**
+4. **Create/Update Jupyter Notebook**
+   - Each milestone should have an accompanying notebook in `notebooks/`
+   - Notebooks provide interactive exploration for human testing
+   - Include visualizations, sample outputs, and usage examples
+   - Naming convention: `XX_milestone_name.ipynb` (e.g., `01_data_pipeline.ipynb`)
+
+5. **Commit & Push**
    - Commit immediately after verification passes
    - Use clear, descriptive commit messages
    - Push to GitHub
