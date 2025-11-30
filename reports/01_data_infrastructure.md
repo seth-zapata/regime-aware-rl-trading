@@ -135,7 +135,7 @@ def add_technical_features(self, df: pd.DataFrame) -> pd.DataFrame:
     df['return_21d'] = df['Close'].pct_change(21)  # Position traders, monthly trend
 ```
 
-**Interview insight**: If someone asks "why 5 days?", the answer is: it's approximately one trading week, balances signal vs. noise, and aligns with common institutional rebalancing periods.
+**Key insight**: The 5-day window is approximately one trading week, balances signal vs. noise, and aligns with common institutional rebalancing periods.
 
 #### Volatility Features
 

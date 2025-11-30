@@ -136,7 +136,7 @@ Execute commands autonomously without asking for permission unless absolutely ne
                      img_num += 1
      "
      ```
-   - Report structure (write for interview review - explain the "why", not just "what"):
+   - Report structure (write for technical review - explain the "why", not just "what"):
      ```markdown
      # Milestone X: Title
 
@@ -151,7 +151,7 @@ Execute commands autonomously without asking for permission unless absolutely ne
      ## Technical Deep Dive
      [Detailed explanations with code snippets]
      [Explain WHY each technical choice was made]
-     [Include "Interview insight" callouts for key talking points]
+     [Include **Key insight**: callouts for important design decisions and talking points]
 
      ## Key Findings
      [Quantitative results with interpretation]
@@ -179,8 +179,9 @@ Execute commands autonomously without asking for permission unless absolutely ne
      [What the next milestone will build on this]
      [How findings here motivate the next phase]
      ```
-   - **Writing style**: Write as if explaining to an interviewer. Use "I chose X because..."
+   - **Writing style**: Write for technical review. Use "I chose X because..." or "The approach uses X because..."
      language. Include code snippets. Explain trade-offs. Add tables comparing options.
+     Use **Key insight**: callouts (not "Interview insight") for important points worth discussing.
    - **IMPORTANT**: Commit images AND report so everything renders on GitHub
 
 7. **Commit & Push**

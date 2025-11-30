@@ -17,7 +17,7 @@ SEC filings contain rich information that price data misses:
 - **Risk disclosures**: New risks or changes in risk language
 - **Operational commentary**: Qualitative context behind numbers
 
-**Interview Insight**: "I chose to extract sentiment from SEC filings because they represent the company's official, legally-binding communication. Unlike earnings calls or press releases, 10-K/10-Q content must be accurate by law, making sentiment signals more reliable."
+**Key insight**: SEC filings represent the company's official, legally-binding communication. Unlike earnings calls or press releases, 10-K/10-Q content must be accurate by law, making sentiment signals more reliable.
 
 ### Why FinBERT Over Generic Sentiment Models?
 
@@ -51,7 +51,7 @@ I analyzed different filing sections and found:
 | **Item 7: MD&A** | Management's analysis | Tone reveals confidence |
 | **Item 8: Financial Statements** | Numbers only | No sentiment |
 
-**Interview Insight**: "Risk Factors is interesting because it's legally required to disclose material risks. When a company adds new risk language or makes existing risks more prominent, it's a forward-looking signal. MD&A reveals how management frames their performance—optimistic framing vs cautious hedging."
+**Key insight**: Risk Factors is legally required to disclose material risks. When a company adds new risk language or makes existing risks more prominent, it's a forward-looking signal. MD&A reveals how management frames their performance—optimistic framing vs cautious hedging.
 
 ---
 
@@ -112,7 +112,7 @@ def _chunk_text(self, text: str) -> List[str]:
             current_length += sentence_length
 ```
 
-**Interview Insight**: "I chunk by sentences rather than arbitrary token boundaries because sentiment often depends on full sentence context. Splitting mid-sentence could turn 'despite challenges, we succeeded' into 'despite challenges,' which loses the positive conclusion."
+**Key insight**: Chunking by sentences rather than arbitrary token boundaries preserves semantic coherence. Splitting mid-sentence could turn "despite challenges, we succeeded" into "despite challenges," which loses the positive conclusion.
 
 #### Weighted Aggregation Across Chunks
 
@@ -166,7 +166,7 @@ def _analyze_filing(self, filing: Filing) -> Optional[Dict]:
         result[f'{section}_compound'] = sent['compound']
 ```
 
-**Interview Insight**: "I keep both overall and section-specific sentiment because they serve different purposes. Overall sentiment is simpler for modeling, but Risk Factors vs MD&A divergence can itself be a signal—if a company's MD&A is unusually optimistic relative to their stated risks, it might indicate overconfidence."
+**Key insight**: Both overall and section-specific sentiment serve different purposes. Overall sentiment is simpler for modeling, but Risk Factors vs MD&A divergence can itself be a signal—if a company's MD&A is unusually optimistic relative to their stated risks, it might indicate overconfidence.
 
 #### Forward-Fill to Daily Frequency
 
@@ -197,7 +197,7 @@ surprise = filing_df['overall_compound'] - rolling_mean.shift(1)
 daily_df['days_since_filing'] = [self._days_since_last_filing(d, filing_dates) for d in dates]
 ```
 
-**Interview Insight**: "Raw sentiment level matters, but changes might matter more. A company that's always negative isn't news. A company that becomes significantly more negative is news. The 'surprise' feature captures deviation from the company's own baseline."
+**Key insight**: Raw sentiment level matters, but changes might matter more. A company that's always negative isn't news. A company that becomes significantly more negative is news. The "surprise" feature captures deviation from the company's own baseline.
 
 ---
 
@@ -263,7 +263,7 @@ This makes sense: Risk Factors is legally required to be comprehensive about ris
 
 **Bottom panel**: Positive vs Negative breakdown. Negative sentiment (red, below axis) consistently outweighs positive (green, above axis), but the gap varies.
 
-**Interview Insight**: "The consistent negativity isn't concerning—it's expected for legal documents. What matters for prediction is the *variation*. The 10-K filings (Oct each year) show more negative sentiment than adjacent 10-Qs, which creates exploitable temporal patterns."
+**Key insight**: The consistent negativity isn't concerning—it's expected for legal documents. What matters for prediction is the *variation*. The 10-K filings (Oct each year) show more negative sentiment than adjacent 10-Qs, which creates exploitable temporal patterns.
 
 ### Sentiment by Filing Type
 
@@ -279,7 +279,7 @@ Clear separation: 10-K filings (orange) cluster lower (more negative) than 10-Q 
 
 All points are above the diagonal line, meaning MD&A sentiment > Risk Factors sentiment for every filing.
 
-**Interview Insight**: "This divergence is a feature, not a bug. If we see MD&A sentiment drop toward the Risk Factors level, it might indicate management losing confidence in their ability to contextualize risks positively—a potential warning sign."
+**Key insight**: This divergence is a feature, not a bug. If MD&A sentiment drops toward the Risk Factors level, it might indicate management losing confidence in their ability to contextualize risks positively—a potential warning sign.
 
 ---
 
@@ -396,7 +396,7 @@ $ pytest tests/test_sentiment.py -v --tb=short
 2. **Regime interaction**: Is sentiment more/less predictive in different macro regimes?
 3. **Ablation**: How much value does sentiment add vs price-only?
 
-**Interview Insight**: "This milestone creates the features. The next milestones will test if they matter. I intentionally separated feature engineering from modeling so we can rigorously ablate each component."
+**Key insight**: This milestone creates the features. The next milestones will test if they matter. Separating feature engineering from modeling enables rigorous ablation of each component.
 
 ---
 

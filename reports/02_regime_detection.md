@@ -75,7 +75,7 @@ CONTRACTION if ANY of:
 EXPANSION otherwise
 ```
 
-**Interview insight**: If asked "why these thresholds?", the answer is:
+**Key insight**: The threshold selection is grounded in historical data:
 - VIX 35 is roughly 2 standard deviations above the long-term mean (~20)
 - Yield curve inversion has preceded every recession since 1970
 - BAA spread > 3% has historically indicated credit stress
