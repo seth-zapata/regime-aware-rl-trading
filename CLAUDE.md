@@ -136,31 +136,51 @@ Execute commands autonomously without asking for permission unless absolutely ne
                      img_num += 1
      "
      ```
-   - Report structure:
+   - Report structure (write for interview review - explain the "why", not just "what"):
      ```markdown
      # Milestone X: Title
 
      ## Executive Summary
-     [2-3 sentence overview of what was accomplished]
+     [2-3 sentences: what was built AND the key insight/finding]
 
-     ## Technical Approach
-     [Design decisions, architecture, why this approach]
+     ## Why This Approach?
+     [Explain the reasoning behind design decisions]
+     [What alternatives were considered and why rejected?]
+     [What problem does this solve?]
 
-     ## Implementation Details
-     [Key components, code structure, dependencies]
+     ## Technical Deep Dive
+     [Detailed explanations with code snippets]
+     [Explain WHY each technical choice was made]
+     [Include "Interview insight" callouts for key talking points]
 
      ## Key Findings
-     [Data exploration results, statistics, insights]
+     [Quantitative results with interpretation]
+     [What do the numbers mean? Why do they matter?]
+     [Connect findings back to the research question]
 
      ## Visualizations
      ![Description](images/XX_plot_1.png)
+     [Explain what the visualization shows and why it matters]
 
      ## Challenges and Solutions
-     [Problems encountered and how they were resolved]
+     [Problem → Options Considered (with trade-offs) → Chosen Solution → Why]
+     [Include code snippets showing the solution]
+
+     ## Code Architecture
+     [Design patterns used and why]
+     [How components fit together]
+     [Test design rationale]
+
+     ## Connection to Research Question
+     [How does this milestone advance the core hypothesis?]
+     [What has been established vs. what remains to test?]
 
      ## Next Steps
      [What the next milestone will build on this]
+     [How findings here motivate the next phase]
      ```
+   - **Writing style**: Write as if explaining to an interviewer. Use "I chose X because..."
+     language. Include code snippets. Explain trade-offs. Add tables comparing options.
    - **IMPORTANT**: Commit images AND report so everything renders on GitHub
 
 7. **Commit & Push**
