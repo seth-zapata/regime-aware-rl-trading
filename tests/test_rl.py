@@ -217,13 +217,14 @@ class TestTradingEnv:
         )
 
         obs, _ = env.reset()
-        initial_balance = env.balance
+        initial_cash = env.cash
 
         # Execute a buy
         env.step(2)  # BUY
 
-        # Balance should decrease by transaction cost
-        assert env.balance < initial_balance
+        # Cash should decrease due to buying shares + transaction costs
+        # (we buy shares, reducing cash, and pay transaction costs)
+        assert env.cash < initial_cash
 
     def test_env_portfolio_history(self, small_trading_data):
         """Test portfolio history tracking."""

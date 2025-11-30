@@ -176,19 +176,16 @@ This prevents over-interpretation of noisy results.
 | Sharpe Ratio | -11.38 | N/A |
 | Max Drawdown | 100% | ~5% |
 
-### Walk-Forward Validation (3 Windows)
+### Walk-Forward Validation (2 Windows)
 
 | Metric | Value |
 |--------|-------|
-| Mean Test Return | -100.86% |
-| Win Rate | 0% (0/2 windows) |
-| Overfit Ratio | Very High |
+| Mean Test Return | -0.06% |
+| Mean Sharpe Ratio | 0.78 |
+| Max Drawdown | 10.55% |
+| Win Rate | 50% (1/2 windows) |
 
-**Important caveat**: These results are from a demo run with only 50,000 training timesteps. Production RL trading would use:
-- 500,000+ timesteps
-- Multiple random seeds
-- Extensive hyperparameter tuning
-- Longer validation periods
+The walk-forward results show mixed performance - one losing window (-14%) and one winning window (+14%). This realistic variance is expected with limited training and demonstrates the importance of multi-window validation.
 
 ### Regime-Conditional Behavior
 
@@ -197,10 +194,10 @@ The agent's action distribution by regime:
 | Regime | Sell | Hold | Buy |
 |--------|------|------|-----|
 | Expansion | 0% | 0% | 0% |
-| Contraction | 92.5% | 7.5% | 0% |
+| Contraction | 54% | 45% | 1% |
 | Crisis | 0% | 0% | 0% |
 
-**Key insight**: The agent learned to sell aggressively during Contraction regimes. However, the limited training and short test period (only Contraction regime present) make this behavior inconclusive. The fact that regime information is being used is encouraging.
+**Key insight**: The agent learned a bearish bias during Contraction regimes - predominantly selling or holding, rarely buying. This makes economic sense (defensive in uncertain periods), though it underperformed in the 2023 bull market.
 
 ## Visualizations
 
@@ -208,7 +205,7 @@ The agent's action distribution by regime:
 
 ![Portfolio Value Comparison](images/04_plot_1.png)
 
-The chart shows the RL strategy tracking buy & hold initially, then experiencing a catastrophic drawdown at the end. This illustrates a key RL failure mode: the policy can collapse when encountering out-of-distribution states.
+The chart shows the RL strategy diverging from buy & hold over time. The agent maintained a short position during most of 2023, resulting in underperformance in a rising market. This is a legitimate strategy mismatch (bearish agent in bull market), not a bug.
 
 ### Walk-Forward Window Performance
 
@@ -224,20 +221,29 @@ The agent shows clear regime-conditional behavior - predominantly selling during
 
 ## Challenges and Solutions
 
-### Challenge 1: Portfolio Value Going Negative
+### Challenge 1: Portfolio Value Calculation Bug
 
-**Problem**: During evaluation with random actions, portfolio could go negative.
+**Problem**: Initial implementation had a critical bug in portfolio value calculation. When going short, the portfolio value would immediately drop to near-zero or negative, causing catastrophic losses unrelated to actual market moves.
 
-**Options considered**:
-1. Clip portfolio at zero (artificial)
-2. End episode on bankruptcy (realistic)
-3. Allow negative (unrealistic margin)
-
-**Solution**: Episodes terminate when portfolio value reaches zero (bankruptcy). This is realistic and provides clear negative reward signal.
-
+**Root cause**: The original code mixed two different accounting models:
 ```python
-terminated = self.portfolio_value <= 0  # Bankruptcy ends episode
+# BUGGY: Mixed fractional position with absolute values
+self.portfolio_value = self.balance + self.position * self.portfolio_value * (1 + price_return)
 ```
+
+When `position = -1` (short), this formula essentially subtracted the entire portfolio value.
+
+**Solution**: Implemented proper share-based accounting:
+```python
+# Track actual shares held (positive=long, negative=short)
+self.shares_held = target_shares
+self.cash -= (shares_to_trade * price) + costs
+
+# Portfolio value = cash + position value
+self.portfolio_value = self.cash + self.shares_held * next_price
+```
+
+**Key insight**: This bug illustrates why thorough testing of trading systems is critical. A subtle accounting error can make strategies appear far worse (or better) than reality. The fix now properly tracks shares, cash, and transaction costs separately.
 
 ### Challenge 2: Walk-Forward Window Generation
 

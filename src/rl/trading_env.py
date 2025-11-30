@@ -131,10 +131,14 @@ class TradingEnv(gym.Env):
 
         # Episode state (initialized in reset)
         self.current_step = 0
-        self.balance = initial_balance
-        self.position = 0.0  # Current position (-1 to 1)
+        self.position = 0.0  # Current position (-1 to 1, where 1 = fully long, -1 = fully short)
         self.entry_price = 0.0
         self.portfolio_value = initial_balance
+
+        # Track shares held (positive for long, negative for short)
+        # This enables proper P&L calculation
+        self.shares_held = 0.0
+        self.cash = initial_balance  # Cash available (separate from position value)
 
         # For differential Sharpe reward
         self.returns_history = []
@@ -180,11 +184,14 @@ class TradingEnv(gym.Env):
 
         # Reset episode state
         self.current_step = self.window_size  # Start after warmup
-        self.balance = self.initial_balance
         self.position = 0.0
         self.entry_price = 0.0
         self.portfolio_value = self.initial_balance
         self.prev_portfolio_value = self.initial_balance
+
+        # Reset position tracking
+        self.shares_held = 0.0
+        self.cash = self.initial_balance
 
         # Reset tracking
         self.returns_history = []
@@ -240,7 +247,13 @@ class TradingEnv(gym.Env):
 
     def _execute_action(self, action: int, price: float):
         """
-        Execute trading action.
+        Execute trading action with proper share-based accounting.
+
+        The model works as follows:
+        - position: -1 (fully short) to +1 (fully long), representing target allocation
+        - shares_held: actual number of shares (positive=long, negative=short)
+        - cash: available cash (increases when selling, decreases when buying)
+        - portfolio_value: cash + (shares_held * price)
 
         Args:
             action: Trading action (0=Sell, 1=Hold, 2=Buy)
@@ -260,12 +273,27 @@ class TradingEnv(gym.Env):
         position_change = target_position - self.position
 
         if abs(position_change) > 0.01:  # Threshold to avoid tiny trades
+            # Calculate current portfolio value before trade
+            current_portfolio_value = self.cash + self.shares_held * price
+
+            # Calculate target shares based on target position
+            # target_position of 1.0 means 100% of portfolio in shares
+            target_value_in_shares = target_position * current_portfolio_value
+            target_shares = target_value_in_shares / price
+
+            # Calculate shares to trade
+            shares_to_trade = target_shares - self.shares_held
+            trade_value = abs(shares_to_trade * price)
+
             # Calculate transaction costs
-            trade_value = abs(position_change) * self.portfolio_value
             costs = trade_value * (self.transaction_cost + self.slippage)
 
-            # Update balance
-            self.balance -= costs
+            # Update cash: selling adds cash, buying reduces cash
+            # shares_to_trade > 0 means buying, < 0 means selling
+            self.cash -= (shares_to_trade * price) + costs
+
+            # Update shares held
+            self.shares_held = target_shares
 
             # Record trade
             self.trades.append({
@@ -273,6 +301,7 @@ class TradingEnv(gym.Env):
                 'price': price,
                 'prev_position': prev_position,
                 'new_position': target_position,
+                'shares_traded': shares_to_trade,
                 'costs': costs
             })
 
@@ -301,16 +330,17 @@ class TradingEnv(gym.Env):
         Returns:
             Scaled reward
         """
-        # Calculate portfolio return
-        price_return = (next_price - current_price) / current_price
-        position_return = self.position * price_return
-
-        # Update portfolio value
+        # Update portfolio value based on new price
+        # portfolio_value = cash + shares_held * price
         self.prev_portfolio_value = self.portfolio_value
-        self.portfolio_value = self.balance + self.position * self.portfolio_value * (1 + price_return)
+        self.portfolio_value = self.cash + self.shares_held * next_price
 
         # Portfolio return for this step
-        portfolio_return = (self.portfolio_value - self.prev_portfolio_value) / self.prev_portfolio_value
+        if self.prev_portfolio_value > 0:
+            portfolio_return = (self.portfolio_value - self.prev_portfolio_value) / self.prev_portfolio_value
+        else:
+            portfolio_return = 0.0
+
         self.returns_history.append(portfolio_return)
 
         # Track portfolio value
@@ -322,7 +352,6 @@ class TradingEnv(gym.Env):
             reward = portfolio_return
         else:
             returns = np.array(self.returns_history)
-            mean_return = returns.mean()
             std_return = returns.std() + 1e-8
 
             # Sharpe-like reward: penalize volatility
@@ -331,8 +360,9 @@ class TradingEnv(gym.Env):
         # Add drawdown penalty
         if len(self.portfolio_history) > 1:
             peak = max(self.portfolio_history)
-            drawdown = (peak - self.portfolio_value) / peak
-            reward -= 0.1 * drawdown  # Penalize drawdowns
+            if peak > 0:
+                drawdown = (peak - self.portfolio_value) / peak
+                reward -= 0.1 * max(0, drawdown)  # Only penalize positive drawdowns
 
         return reward * self.reward_scaling
 
@@ -393,7 +423,8 @@ class TradingEnv(gym.Env):
             'price': current_row[self.price_column],
             'position': self.position,
             'portfolio_value': self.portfolio_value,
-            'balance': self.balance,
+            'cash': self.cash,
+            'shares_held': self.shares_held,
             'num_trades': len(self.trades),
         }
 
