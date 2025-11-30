@@ -96,7 +96,7 @@ All 6 milestones completed with comprehensive documentation, 127 unit tests, and
 ## Project Structure
 
 ```
-quant-trading-advanced/
+regime-aware-rl-trading/
 ├── src/
 │   ├── data/                    # Data loading infrastructure
 │   │   ├── price_loader.py      # Yahoo Finance integration
@@ -145,7 +145,8 @@ quant-trading-advanced/
 
 ```bash
 # Clone and navigate
-cd quant-trading-advanced
+git clone https://github.com/seth-zapata/regime-aware-rl-trading.git
+cd regime-aware-rl-trading
 
 # Create virtual environment
 python3 -m venv venv

@@ -2,7 +2,7 @@
 
 **Project Goal**: Build a macro regime-aware trading system using alternative data (SEC EDGAR filings, FRED macroeconomic indicators) and reinforcement learning to demonstrate that incorporating fundamental and macro signals provides measurable improvement over price-only models.
 
-**Context**: This is a follow-up to the completed baseline project (`quant-trading-ml/`), which proved that daily stock prediction from technical indicators alone is fundamentally difficult. This advanced project tackles the problem with institutional-level methods and a more realistic problem formulation.
+**Context**: This is a follow-up to the completed baseline project ([lstm-stock-prediction](https://github.com/seth-zapata/lstm-stock-prediction)), which proved that daily stock prediction from technical indicators alone is fundamentally difficult. This advanced project tackles the problem with institutional-level methods and a more realistic problem formulation.
 
 ---
 
@@ -504,8 +504,8 @@ These are exactly what quant firms look for in candidates.
 
 ```bash
 # Clone and navigate to project
-git clone https://github.com/seth-zapata/quant-trading-advanced.git
-cd quant-trading-advanced
+git clone https://github.com/seth-zapata/regime-aware-rl-trading.git
+cd regime-aware-rl-trading
 
 # Create and activate virtual environment
 python3 -m venv venv
