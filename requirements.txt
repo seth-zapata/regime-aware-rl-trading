@@ -154,3 +154,8 @@ websocket-client==1.9.0
 websockets==15.0.1
 widgetsnbextension==4.0.15
 yfinance==0.2.66
+
+# RL dependencies
+stable_baselines3==2.7.0
+gymnasium==1.2.2
+cloudpickle==3.1.2
